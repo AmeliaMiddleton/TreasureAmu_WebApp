@@ -148,7 +148,7 @@ export class LandingComponent {
   readonly currentYear = new Date().getFullYear();
 
   readonly steps = [
-    { number: 1, label: 'Join the group', detail: 'Sign up below — it\'s free to join' },
+    { number: 1, label: 'Request to join', detail: 'Submit a request below — it\'s free' },
     { number: 2, label: 'Attend a party', detail: 'Get notified of upcoming listing parties near you' },
     { number: 3, label: 'Bring items or host', detail: 'We\'ll photograph, research, and list together' },
     { number: 4, label: 'Items sell — you keep 95%', detail: 'Payment goes directly to you when sold' },

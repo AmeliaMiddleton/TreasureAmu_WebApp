@@ -97,20 +97,20 @@
   <!-- ══════════════ SIGNUP FORM ══════════════ -->
   <section class="section section--alt" id="signup" aria-labelledby="signup-heading">
     <div class="container">
-      <h2 id="signup-heading" class="section__title">Join Treasureamu</h2>
+      <h2 id="signup-heading" class="section__title">Request to Join Treasureamu</h2>
       <p class="section__subtitle">
         Spots are limited to keep it a real neighborhood community.
-        Sign up to reserve your place!
+        Request your place and we'll be in touch!
       </p>
 
-      <div class="form-card" role="region" aria-label="Membership signup form">
+      <div class="form-card" role="region" aria-label="Membership request form">
 
         <!-- ── Success State ── -->
         @if (formState() === 'success') {
           <div class="status-message status-message--success" role="alert" aria-live="polite">
             <span class="status-message__icon" aria-hidden="true">✅</span>
             <div>
-              <strong>You're in!</strong>
+              <strong>Request Received!</strong>
               <p>{{ successMessage() }}</p>
             </div>
           </div>
@@ -136,13 +136,13 @@
             [formGroup]="signupForm"
             (ngSubmit)="onSubmit()"
             novalidate
-            aria-label="Signup form"
+            aria-label="Request form"
           >
 
             <!-- Signup type toggle -->
             <fieldset class="form-fieldset">
               <legend class="form-legend">I want to… <span class="required-note" aria-label="required">*</span></legend>
-              <div class="radio-group" role="group" aria-label="Signup type">
+              <div class="radio-group" role="group" aria-label="Request type">
                 <label class="radio-label" [class.radio-label--active]="f['signupType'].value === 'member'">
                   <input
                     type="radio"
@@ -150,7 +150,7 @@
                     value="member"
                     aria-describedby="member-desc"
                   />
-                  <span class="radio-label__text">Become a Full Member</span>
+                  <span class="radio-label__text">Request Full Membership</span>
                 </label>
                 <p id="member-desc" class="radio-hint">Attend parties, sell items, and get first dibs on listings</p>
 
@@ -297,7 +297,7 @@
 
             <p class="form-privacy">
               🔒 We respect your privacy. Your information is never sold or shared.
-              By signing up you agree to be contacted by Amy Cox / TreasureAmu about
+              By submitting a request you agree to be contacted by Amy Cox / TreasureAmu about
               upcoming listing parties and community news.
             </p>
           </form>
