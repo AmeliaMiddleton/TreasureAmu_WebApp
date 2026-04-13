@@ -14,7 +14,7 @@ import { ThemeService } from '../../../core/services/theme.service';
           <button
             class="theme-swatch"
             [class.theme-swatch--active]="themeService.activeTheme().id === theme.id"
-            [style.background]="theme.colors.ctaBg"
+            [style.--swatch-color]="theme.colors.ctaBg"
             [attr.aria-label]="'Switch to ' + theme.name + ' theme'"
             [attr.aria-pressed]="themeService.activeTheme().id === theme.id"
             [title]="theme.name + ' — ' + theme.description"
@@ -40,25 +40,42 @@ import { ThemeService } from '../../../core/services/theme.service';
       gap: 6px;
     }
     .theme-swatch {
+      /* 44×44 touch target (WCAG 2.5.5) with 24px visual circle */
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+      position: relative;
+      flex-shrink: 0;
+    }
+    /* Colored circle rendered via pseudo-element */
+    .theme-swatch::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      border: 2px solid transparent;
-      cursor: pointer;
-      transition: transform 0.15s, border-color 0.15s;
-      padding: 0;
+      background: var(--swatch-color);
+      transform: translate(-50%, -50%);
+      transition: transform 0.15s, box-shadow 0.15s;
     }
-    .theme-swatch:hover {
-      transform: scale(1.15);
+    .theme-swatch:hover::before {
+      transform: translate(-50%, -50%) scale(1.15);
     }
-    .theme-swatch--active {
-      border-color: var(--color-text-primary);
-      transform: scale(1.2);
+    .theme-swatch--active::before {
+      transform: translate(-50%, -50%) scale(1.2);
+      box-shadow: 0 0 0 2px var(--color-text-primary);
     }
     /* Focus style for keyboard navigation */
     .theme-swatch:focus-visible {
       outline: 3px solid var(--color-focus-ring);
       outline-offset: 2px;
+      border-radius: 50%;
     }
   `],
 })

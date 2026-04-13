@@ -85,7 +85,7 @@
       <ul class="perks-grid" aria-label="Member benefits">
         @for (perk of perks; track perk.title) {
           <li class="perk-card">
-            <div class="perk-card__icon" aria-hidden="true" role="img">{{ perk.icon }}</div>
+            <div class="perk-card__icon" aria-hidden="true">{{ perk.icon }}</div>
             <h3 class="perk-card__title">{{ perk.title }}</h3>
             <p class="perk-card__body">{{ perk.body }}</p>
           </li>
@@ -330,22 +330,23 @@
     </div>
   </section>
 
-  <!-- ══════════════ FOOTER ══════════════ -->
-  <footer class="site-footer" role="contentinfo">
-    <div class="container site-footer__inner">
-      <div>
-        <span class="site-logo">
-          <span class="site-logo__treasure">Treasure</span><span class="site-logo__amu">amu</span>
-        </span>
-        <p class="footer-tagline">A Geekamu Business — Community Reselling Platform</p>
-      </div>
-      <div class="footer-contact">
-        <p>Questions? Email Amy:</p>
-        <a href="mailto:Amy@geekamu.com" class="footer-email">Amy&#64;geekamu.com</a>
-      </div>
-      <p class="footer-copy">
-        &copy; {{ currentYear }} TreasureAmu. All rights reserved.
-      </p>
-    </div>
-  </footer>
 </main>
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer class="site-footer" role="contentinfo">
+  <div class="container site-footer__inner">
+    <div>
+      <span class="site-logo">
+        <span class="site-logo__treasure">Treasure</span><span class="site-logo__amu">amu</span>
+      </span>
+      <p class="footer-tagline">A Geekamu Business — Community Reselling Platform</p>
+    </div>
+    <div class="footer-contact">
+      <p>Questions? Email Amy:</p>
+      <a href="mailto:Amy@geekamu.com" class="footer-email">Amy&#64;geekamu.com</a>
+    </div>
+    <p class="footer-copy">
+      &copy; {{ currentYear }} TreasureAmu. All rights reserved.
+    </p>
+  </div>
+</footer>
