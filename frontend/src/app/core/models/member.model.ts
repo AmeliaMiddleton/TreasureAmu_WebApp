@@ -9,6 +9,7 @@ export interface SignupRequest {
   signupType: SignupType;
   zipCode: string;
   phone?: string;
+  organizationName?: string;
 }
 
 export interface SignupResponse {

@@ -25,8 +25,9 @@ CREATE TABLE IF NOT EXISTS public.members (
   email        TEXT        NOT NULL CHECK (email ~* '^[^@]+@[^@]+\.[^@]+$'),
   member_type  member_type NOT NULL DEFAULT 'personal',
   signup_type  signup_type NOT NULL DEFAULT 'member',
-  zip_code     TEXT        NOT NULL CHECK (zip_code ~ '^\d{5}(-\d{4})?$'),
-  is_active    BOOLEAN     NOT NULL DEFAULT TRUE,
+  zip_code          TEXT        NOT NULL CHECK (zip_code ~ '^\d{5}(-\d{4})?$'),
+  organization_name TEXT        CHECK (organization_name IS NULL OR char_length(organization_name) BETWEEN 1 AND 100),
+  is_active         BOOLEAN     NOT NULL DEFAULT TRUE,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ,
 
@@ -98,7 +99,8 @@ COMMENT ON COLUMN public.members.last_name   IS 'Member last name';
 COMMENT ON COLUMN public.members.email       IS 'Unique contact email';
 COMMENT ON COLUMN public.members.member_type IS 'Personal, business, or non-profit';
 COMMENT ON COLUMN public.members.signup_type IS 'Full member or newsletter subscriber only';
-COMMENT ON COLUMN public.members.zip_code    IS 'ZIP code for party proximity matching';
-COMMENT ON COLUMN public.members.is_active   IS 'Soft-delete / unsubscribe flag';
+COMMENT ON COLUMN public.members.zip_code          IS 'ZIP code for party proximity matching';
+COMMENT ON COLUMN public.members.organization_name IS 'Company or organization name (required for business and nonprofit members)';
+COMMENT ON COLUMN public.members.is_active         IS 'Soft-delete / unsubscribe flag';
 COMMENT ON COLUMN public.members.created_at  IS 'UTC timestamp of signup';
 COMMENT ON COLUMN public.members.updated_at  IS 'UTC timestamp of last update (auto-set by trigger)';

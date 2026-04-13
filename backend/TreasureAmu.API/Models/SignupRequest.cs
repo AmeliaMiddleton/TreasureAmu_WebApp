@@ -6,7 +6,7 @@ namespace TreasureAmu.API.Models;
 /// <summary>
 /// Incoming signup payload from the Angular frontend.
 /// </summary>
-public class SignupRequest
+public class SignupRequest : IValidatableObject
 {
     [Required]
     [JsonPropertyName("firstName")]
@@ -33,6 +33,21 @@ public class SignupRequest
     [RegularExpression(@"^\d{5}(-\d{4})?$", ErrorMessage = "ZIP code must be 5 or 9 digits.")]
     [JsonPropertyName("zipCode")]
     public string ZipCode { get; set; } = string.Empty;
+
+    [MaxLength(100)]
+    [JsonPropertyName("organizationName")]
+    public string? OrganizationName { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        var type = MemberType?.ToLower();
+        if ((type == "business" || type == "nonprofit") && string.IsNullOrWhiteSpace(OrganizationName))
+        {
+            yield return new ValidationResult(
+                "Company or organization name is required for business and non-profit members.",
+                new[] { nameof(OrganizationName) });
+        }
+    }
 }
 
 /// <summary>

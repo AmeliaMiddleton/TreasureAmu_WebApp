@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -7,6 +7,7 @@ import {
   Validators,
   AbstractControl,
 } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { MemberService } from '../../core/services/member.service';
 import { ThemeSwitcherComponent } from '../../shared/components/theme-switcher/theme-switcher.component';
 import { MemberType, SignupType, MEMBER_TYPE_LABELS } from '../../core/models/member.model';
@@ -20,9 +21,10 @@ type FormState = 'idle' | 'submitting' | 'success' | 'error';
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss',
 })
-export class LandingComponent {
+export class LandingComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly memberService = inject(MemberService);
+  private readonly memberTypeSub: Subscription;
 
   readonly memberTypeLabels = MEMBER_TYPE_LABELS;
   readonly memberTypeKeys = Object.keys(MEMBER_TYPE_LABELS) as MemberType[];
@@ -32,13 +34,37 @@ export class LandingComponent {
   successMessage = signal<string>('');
 
   readonly signupForm: FormGroup = this.fb.group({
-    signupType:  ['member' as SignupType, Validators.required],
-    firstName:   ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-    lastName:    ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-    email:       ['', [Validators.required, Validators.email]],
-    memberType:  ['personal' as MemberType, Validators.required],
-    zipCode:     ['', [Validators.required, Validators.pattern(/^\d{5}(-\d{4})?$/)]],
+    signupType:       ['member' as SignupType, Validators.required],
+    firstName:        ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+    lastName:         ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+    email:            ['', [Validators.required, Validators.email]],
+    memberType:       ['personal' as MemberType, Validators.required],
+    zipCode:          ['', [Validators.required, Validators.pattern(/^\d{5}(-\d{4})?$/)]],
+    organizationName: ['', Validators.maxLength(100)],
   });
+
+  get needsOrganizationName(): boolean {
+    const type = this.f['memberType'].value as MemberType;
+    return type === 'business' || type === 'nonprofit';
+  }
+
+  constructor() {
+    this.memberTypeSub = this.signupForm.get('memberType')!.valueChanges
+      .subscribe((type: MemberType) => {
+        const ctrl = this.signupForm.get('organizationName')!;
+        if (type === 'business' || type === 'nonprofit') {
+          ctrl.addValidators(Validators.required);
+        } else {
+          ctrl.removeValidators(Validators.required);
+          ctrl.setValue('');
+        }
+        ctrl.updateValueAndValidity();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.memberTypeSub.unsubscribe();
+  }
 
   get f(): Record<string, AbstractControl> {
     return this.signupForm.controls;
@@ -72,12 +98,13 @@ export class LandingComponent {
     const values = this.signupForm.value;
     this.memberService
       .signup({
-        firstName:  values.firstName,
-        lastName:   values.lastName,
-        email:      values.email,
-        memberType: values.memberType,
-        signupType: values.signupType,
-        zipCode:    values.zipCode,
+        firstName:        values.firstName,
+        lastName:         values.lastName,
+        email:            values.email,
+        memberType:       values.memberType,
+        signupType:       values.signupType,
+        zipCode:          values.zipCode,
+        organizationName: values.organizationName || undefined,
       })
       .subscribe({
         next: (response) => {
@@ -96,7 +123,7 @@ export class LandingComponent {
   }
 
   resetForm(): void {
-    this.signupForm.reset({ signupType: 'member', memberType: 'personal' });
+    this.signupForm.reset({ signupType: 'member', memberType: 'personal', organizationName: '' });
     this.formState.set('idle');
     this.errorMessage.set('');
     this.successMessage.set('');

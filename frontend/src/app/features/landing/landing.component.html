@@ -273,6 +273,30 @@
               </div>
             </div>
 
+            <!-- Company / Organization Name (business and nonprofit only) -->
+            @if (needsOrganizationName) {
+              <div class="form-group" [class.form-group--error]="isInvalid('organizationName')">
+                <label class="form-label" for="organizationName">
+                  {{ f['memberType'].value === 'business' ? 'Company Name' : 'Organization Name' }}
+                  <span class="required-star" aria-label="required">*</span>
+                </label>
+                <input
+                  id="organizationName"
+                  type="text"
+                  class="form-input"
+                  formControlName="organizationName"
+                  autocomplete="organization"
+                  maxlength="100"
+                  [attr.aria-invalid]="isInvalid('organizationName')"
+                  [attr.aria-describedby]="isInvalid('organizationName') ? 'organizationName-error' : null"
+                  [placeholder]="f['memberType'].value === 'business' ? 'Acme Corp' : 'Hope Foundation'"
+                />
+                @if (isInvalid('organizationName')) {
+                  <span id="organizationName-error" class="form-error" role="alert">{{ getError('organizationName') }}</span>
+                }
+              </div>
+            }
+
             <!-- Required fields note -->
             <p class="required-note-global">
               <span class="required-star" aria-hidden="true">*</span> Required fields

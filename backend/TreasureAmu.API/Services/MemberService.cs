@@ -54,29 +54,31 @@ public class MemberService : IMemberService
         // Map DTO → entity
         var member = new Member
         {
-            Id         = Guid.NewGuid(),
-            FirstName  = dto.FirstName.Trim(),
-            LastName   = dto.LastName.Trim(),
-            Email      = dto.Email.Trim().ToLowerInvariant(),
-            MemberType = Enum.TryParse<MemberType>(dto.MemberType, true, out var mt) ? mt : MemberType.Personal,
-            SignupType = Enum.TryParse<SignupType>(dto.SignupType, true, out var st) ? st : SignupType.Member,
-            ZipCode    = dto.ZipCode.Trim(),
-            IsActive   = true,
-            CreatedAt  = DateTime.UtcNow,
+            Id               = Guid.NewGuid(),
+            FirstName        = dto.FirstName.Trim(),
+            LastName         = dto.LastName.Trim(),
+            Email            = dto.Email.Trim().ToLowerInvariant(),
+            MemberType       = Enum.TryParse<MemberType>(dto.MemberType, true, out var mt) ? mt : MemberType.Personal,
+            SignupType       = Enum.TryParse<SignupType>(dto.SignupType, true, out var st) ? st : SignupType.Member,
+            ZipCode          = dto.ZipCode.Trim(),
+            OrganizationName = string.IsNullOrWhiteSpace(dto.OrganizationName) ? null : dto.OrganizationName.Trim(),
+            IsActive         = true,
+            CreatedAt        = DateTime.UtcNow,
         };
 
         // Build the Supabase insert payload (snake_case to match DB columns)
         var payload = new
         {
-            id          = member.Id,
-            first_name  = member.FirstName,
-            last_name   = member.LastName,
-            email       = member.Email,
-            member_type = member.MemberType.ToString().ToLower(),
-            signup_type = member.SignupType.ToString().ToLower(),
-            zip_code    = member.ZipCode,
-            is_active   = member.IsActive,
-            created_at  = member.CreatedAt,
+            id                = member.Id,
+            first_name        = member.FirstName,
+            last_name         = member.LastName,
+            email             = member.Email,
+            member_type       = member.MemberType.ToString().ToLower(),
+            signup_type       = member.SignupType.ToString().ToLower(),
+            zip_code          = member.ZipCode,
+            organization_name = member.OrganizationName,
+            is_active         = member.IsActive,
+            created_at        = member.CreatedAt,
         };
 
         var url = $"{_config.Url}/rest/v1/members";
