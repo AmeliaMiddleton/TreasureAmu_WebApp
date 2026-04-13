@@ -90,7 +90,8 @@
   font-weight: 500;
   transition: color 0.15s;
 
-  &:hover { color: var(--color-accent-text); }
+  // Underline on hover gives a non-color visual cue (WCAG 1.4.1 Use of Color)
+  &:hover { color: var(--color-accent-text); text-decoration: underline; }
   &:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; border-radius: 2px; }
 
   &--cta {
@@ -308,7 +309,7 @@
 }
 
 .step__detail {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--color-text-secondary);
   line-height: 1.5;
 }
@@ -440,7 +441,7 @@
 }
 
 .radio-hint {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--color-text-secondary);
   margin: 0 0 8px 42px;
 }
@@ -515,13 +516,13 @@
 }
 
 .form-error {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-error);
   font-weight: 500;
 }
 
 .form-hint {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-text-secondary);
 }
 
@@ -538,7 +539,7 @@
 }
 
 .form-privacy {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--color-text-secondary);
   text-align: center;
   margin-top: 16px;
@@ -629,4 +630,34 @@
   width: 100%;
   text-align: center;
   margin-top: 8px;
+}
+
+// ═══════════════════════════════════════════════
+//  PROGRAMMATIC FOCUS TARGETS
+// ═══════════════════════════════════════════════
+// tabindex="-1" elements receive focus only via .focus() (never via Tab),
+// so :focus-visible does not fire and we suppress the default :focus ring
+// to avoid a confusing outline on a non-interactive container.
+.status-message[tabindex="-1"]:focus {
+  outline: none;
+}
+
+// ═══════════════════════════════════════════════
+//  FORCED COLORS (Windows High Contrast)
+// ═══════════════════════════════════════════════
+@media (forced-colors: active) {
+  // Ensure form controls have a visible border in High Contrast mode,
+  // since background/border-color CSS vars may be overridden by the OS.
+  .form-input,
+  .form-select {
+    border: 2px solid ButtonBorder;
+  }
+
+  .radio-label input[type="radio"] {
+    forced-color-adjust: none; // Let the browser render the native radio style
+  }
+
+  .radio-label {
+    border: 2px solid ButtonBorder;
+  }
 }

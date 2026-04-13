@@ -16,7 +16,7 @@ import { ThemeService } from '../../../core/services/theme.service';
             [class.theme-swatch--active]="themeService.activeTheme().id === theme.id"
             [style.--swatch-color]="theme.colors.ctaBg"
             [attr.aria-label]="'Switch to ' + theme.name + ' theme'"
-            [attr.aria-pressed]="themeService.activeTheme().id === theme.id"
+            [attr.aria-pressed]="themeService.activeTheme().id === theme.id ? 'true' : 'false'"
             [title]="theme.name + ' — ' + theme.description"
             (click)="themeService.setTheme(theme.id)"
           ></button>

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -28,6 +28,9 @@ export class LandingComponent implements OnDestroy {
 
   readonly memberTypeLabels = MEMBER_TYPE_LABELS;
   readonly memberTypeKeys = Object.keys(MEMBER_TYPE_LABELS) as MemberType[];
+
+  /** Receives focus after a successful submit so keyboard/SR users land on confirmation. */
+  @ViewChild('successMsg') private readonly successMsgRef?: ElementRef<HTMLDivElement>;
 
   formState = signal<FormState>('idle');
   errorMessage = signal<string>('');
@@ -114,6 +117,9 @@ export class LandingComponent implements OnDestroy {
             response.message ||
             `Thank you! Your ${typeLabel} request has been received. We'll be in touch soon!`,
           );
+          // Move focus to the confirmation message so keyboard and screen-reader
+          // users aren't stranded when the form is replaced by the success state.
+          setTimeout(() => this.successMsgRef?.nativeElement?.focus(), 50);
         },
         error: (err: Error) => {
           this.formState.set('error');

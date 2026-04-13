@@ -4,7 +4,7 @@
 <!-- ══════════════ HEADER ══════════════ -->
 <header class="site-header" role="banner">
   <div class="container site-header__inner">
-    <a href="/" class="site-logo" aria-label="Treasureamu — home">
+    <a href="/" class="site-logo" aria-label="TreasureAmu — home">
       <span class="site-logo__treasure">Treasure</span><span class="site-logo__amu">amu</span>
     </a>
     <nav class="site-header__nav" aria-label="Main navigation">
@@ -17,10 +17,10 @@
 </header>
 
 <!-- ══════════════ HERO ══════════════ -->
-<main id="main-content">
+<main id="main-content" tabindex="-1">
   <section class="hero" aria-labelledby="hero-heading">
     <div class="container hero__inner">
-      <div class="hero__badge" aria-label="Status">Now Forming in Your Neighborhood</div>
+      <div class="hero__badge">Now Forming in Your Neighborhood</div>
 
       <h1 id="hero-heading" class="hero__headline">
         Turn Your Clutter<br>
@@ -44,7 +44,7 @@
       </div>
 
       <p class="hero__note">
-        <strong>Only 5% commission</strong> — and only when your item actually sells. 🎉
+        <strong>Only 5% commission</strong> — and only when your item actually sells. <span aria-hidden="true">🎉</span>
       </p>
     </div>
 
@@ -60,7 +60,7 @@
         Simple, social, and designed for everyone — techy or not.
       </p>
 
-      <ol class="steps" aria-label="Steps to get started">
+      <ol class="steps" role="list" aria-label="Steps to get started">
         @for (step of steps; track step.number) {
           <li class="step">
             <div class="step__number" aria-hidden="true">{{ step.number }}</div>
@@ -82,7 +82,7 @@
         Every benefit designed to make selling easy, social, and worth it.
       </p>
 
-      <ul class="perks-grid" aria-label="Member benefits">
+      <ul class="perks-grid" role="list" aria-label="Member benefits">
         @for (perk of perks; track perk.title) {
           <li class="perk-card">
             <div class="perk-card__icon" aria-hidden="true">{{ perk.icon }}</div>
@@ -103,11 +103,24 @@
         Request your place and we'll be in touch!
       </p>
 
-      <div class="form-card" role="region" aria-label="Membership request form">
+      <div class="form-card">
+
+        <!--
+          Persistent live regions: always in the DOM so AT picks up content changes.
+          Newly injected role="alert" nodes can be missed; injecting text into a
+          pre-existing live region is reliable across NVDA, JAWS, VoiceOver.
+        -->
+        <p class="sr-only" aria-live="polite" aria-atomic="true">{{
+          formState() === 'success' ? 'Request received. ' + successMessage() : ''
+        }}</p>
+        <p class="sr-only" aria-live="assertive" aria-atomic="true">{{
+          formState() === 'error' ? 'Error. ' + errorMessage() : ''
+        }}</p>
 
         <!-- ── Success State ── -->
         @if (formState() === 'success') {
-          <div class="status-message status-message--success" role="alert" aria-live="polite">
+          <!-- tabindex="-1" lets us programmatically move focus here after submit -->
+          <div #successMsg class="status-message status-message--success" tabindex="-1">
             <span class="status-message__icon" aria-hidden="true">✅</span>
             <div>
               <strong>Request Received!</strong>
@@ -119,9 +132,9 @@
           </button>
         }
 
-        <!-- ── Error State ── -->
+        <!-- ── Error State ── (sr-only region above handles announcement) -->
         @if (formState() === 'error') {
-          <div class="status-message status-message--error" role="alert" aria-live="assertive">
+          <div class="status-message status-message--error">
             <span class="status-message__icon" aria-hidden="true">⚠️</span>
             <div>
               <strong>Something went wrong</strong>
@@ -141,13 +154,14 @@
 
             <!-- Signup type toggle -->
             <fieldset class="form-fieldset">
-              <legend class="form-legend">I want to… <span class="required-note" aria-label="required">*</span></legend>
-              <div class="radio-group" role="group" aria-label="Request type">
+              <legend class="form-legend">I want to… <span class="required-star" aria-hidden="true">*</span><span class="sr-only">required</span></legend>
+              <div class="radio-group">
                 <label class="radio-label" [class.radio-label--active]="f['signupType'].value === 'member'">
                   <input
                     type="radio"
                     formControlName="signupType"
                     value="member"
+                    aria-required="true"
                     aria-describedby="member-desc"
                   />
                   <span class="radio-label__text">Request Full Membership</span>
@@ -159,6 +173,7 @@
                     type="radio"
                     formControlName="signupType"
                     value="newsletter"
+                    aria-required="true"
                     aria-describedby="newsletter-desc"
                   />
                   <span class="radio-label__text">Newsletter Only</span>
@@ -179,6 +194,7 @@
                   class="form-input"
                   formControlName="firstName"
                   autocomplete="given-name"
+                  aria-required="true"
                   [attr.aria-invalid]="isInvalid('firstName')"
                   [attr.aria-describedby]="isInvalid('firstName') ? 'firstName-error' : null"
                   placeholder="Jane"
@@ -198,6 +214,7 @@
                   class="form-input"
                   formControlName="lastName"
                   autocomplete="family-name"
+                  aria-required="true"
                   [attr.aria-invalid]="isInvalid('lastName')"
                   [attr.aria-describedby]="isInvalid('lastName') ? 'lastName-error' : null"
                   placeholder="Smith"
@@ -219,6 +236,7 @@
                 class="form-input"
                 formControlName="email"
                 autocomplete="email"
+                aria-required="true"
                 [attr.aria-invalid]="isInvalid('email')"
                 [attr.aria-describedby]="isInvalid('email') ? 'email-error' : null"
                 placeholder="jane@example.com"
@@ -238,6 +256,7 @@
                   id="memberType"
                   class="form-select"
                   formControlName="memberType"
+                  aria-required="true"
                   [attr.aria-invalid]="isInvalid('memberType')"
                   [attr.aria-describedby]="isInvalid('memberType') ? 'memberType-error' : null"
                 >
@@ -262,8 +281,9 @@
                   autocomplete="postal-code"
                   inputmode="numeric"
                   maxlength="10"
+                  aria-required="true"
                   [attr.aria-invalid]="isInvalid('zipCode')"
-                  [attr.aria-describedby]="isInvalid('zipCode') ? 'zipCode-error' : 'zipCode-hint'"
+                  [attr.aria-describedby]="isInvalid('zipCode') ? 'zipCode-hint zipCode-error' : 'zipCode-hint'"
                   placeholder="12345"
                 />
                 <span id="zipCode-hint" class="form-hint">Helps us match you with parties near you</span>
@@ -287,6 +307,7 @@
                   formControlName="organizationName"
                   autocomplete="organization"
                   maxlength="100"
+                  [attr.aria-required]="needsOrganizationName"
                   [attr.aria-invalid]="isInvalid('organizationName')"
                   [attr.aria-describedby]="isInvalid('organizationName') ? 'organizationName-error' : null"
                   [placeholder]="f['memberType'].value === 'business' ? 'Acme Corp' : 'Hope Foundation'"
@@ -320,7 +341,7 @@
             </button>
 
             <p class="form-privacy">
-              🔒 We respect your privacy. Your information is never sold or shared.
+              <span aria-hidden="true">🔒</span> We respect your privacy. Your information is never sold or shared.
               By submitting a request you agree to be contacted by Amy Cox / TreasureAmu about
               upcoming listing parties and community news.
             </p>
