@@ -8,10 +8,7 @@ builder.Services.Configure<SupabaseConfig>(
     builder.Configuration.GetSection(SupabaseConfig.SectionName));
 
 // ── HTTP Client (Supabase REST) ───────────────────────────────────────────────
-builder.Services.AddHttpClient("Supabase", client =>
-{
-    client.DefaultRequestHeaders.Add("Content-Type", "application/json");
-});
+builder.Services.AddHttpClient("Supabase");
 
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IMemberService, MemberService>();
