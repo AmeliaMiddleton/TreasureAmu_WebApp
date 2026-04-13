@@ -1,3 +1,5 @@
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using TreasureAmu.API.Data;
 using TreasureAmu.API.Services;
 
@@ -30,7 +32,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-// Allow Angular dev server and production origin
+// Restrict to known origins, specific HTTP methods, and required headers only.
 var allowedOrigins = builder.Configuration
     .GetSection("AllowedOrigins")
     .Get<string[]>() ?? ["http://localhost:4200"];
@@ -41,13 +43,46 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+            .WithMethods("GET", "POST", "OPTIONS")
+            .WithHeaders("Content-Type", "Authorization");
     });
+});
+
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+// Limit signup to 5 attempts per minute per IP to prevent abuse/flooding.
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("signup", limiterOptions =>
+    {
+        limiterOptions.PermitLimit         = 5;
+        limiterOptions.Window              = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit          = 0;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
 // ── Build ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();
+
+// ── HSTS (production only — not useful over plain HTTP in dev) ────────────────
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
+
+app.UseHttpsRedirection();
+
+// ── Security Headers ──────────────────────────────────────────────────────────
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers.Append("X-Content-Type-Options", "nosniff");
+    headers.Append("X-Frame-Options", "DENY");
+    headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    // Disable legacy XSS filter — modern browsers ignore it; enabling it can introduce XSS vectors.
+    headers.Append("X-XSS-Protection", "0");
+    await next();
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -59,8 +94,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 

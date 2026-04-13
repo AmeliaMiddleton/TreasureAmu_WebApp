@@ -91,7 +91,8 @@ public class MemberService : IMemberService
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            _logger.LogError("Supabase insert failed [{Status}]: {Body}", response.StatusCode, body);
+            var safeBody = body.Length > 200 ? body[..200] : body;
+            _logger.LogError("Supabase insert failed [{Status}]: {Body}", response.StatusCode, safeBody);
             throw new HttpRequestException($"Database insert failed: {response.StatusCode}");
         }
 

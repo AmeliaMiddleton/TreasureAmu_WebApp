@@ -18,6 +18,9 @@ public class SignupRequest : IValidatableObject
 
     [Required]
     [EmailAddress]
+    [RegularExpression(@"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$",
+        ErrorMessage = "Email address format is not valid.")]
+    [MaxLength(254)]
     [JsonPropertyName("email")]
     public string Email { get; set; } = string.Empty;
 

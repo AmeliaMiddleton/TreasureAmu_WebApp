@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TreasureAmu.API.Models;
 using TreasureAmu.API.Services;
 
@@ -26,6 +27,7 @@ public class MembersController : ControllerBase
     /// Registers a new member or newsletter subscriber.
     /// </summary>
     [HttpPost("signup")]
+    [EnableRateLimiting("signup")]
     [ProducesResponseType(typeof(SignupResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(SignupResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(SignupResponse), StatusCodes.Status409Conflict)]
@@ -87,5 +89,5 @@ public class MembersController : ControllerBase
     [HttpGet("health")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult Health() =>
-        Ok(new { status = "healthy", timestamp = DateTime.UtcNow, service = "TreasureAmu.API" });
+        Ok(new { status = "ok" });
 }

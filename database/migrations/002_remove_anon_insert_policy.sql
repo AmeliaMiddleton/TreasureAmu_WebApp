@@ -1,0 +1,22 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+--  TreasureAmu — Migration 002
+--  Removes the anonymous INSERT policy on the members table.
+--
+--  REASON:
+--  The "Anon can insert" RLS policy allowed unauthenticated callers to write
+--  directly to the database, bypassing all backend validation (email format,
+--  duplicate checks, input sanitization). All writes must go through the C#
+--  API, which uses the service_role key and enforces full validation.
+--
+--  IMPACT:
+--  After applying this migration, only the service_role (C# API) can write
+--  to the members table. Direct Supabase REST or PostgREST calls from browsers
+--  or unauthenticated clients will be rejected with a 403.
+--
+--  HOW TO RUN:
+--  1. Go to your Supabase project → SQL Editor
+--  2. Paste this file and click "Run"
+--  (Or use the Supabase CLI: supabase db push)
+-- ══════════════════════════════════════════════════════════════════════════════
+
+DROP POLICY IF EXISTS "Anon can insert" ON public.members;
