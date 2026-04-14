@@ -170,7 +170,7 @@ export const environment = {
 
 ## Deployment
 
-Follow the steps below **in order** the first time you deploy. After the one-time cloud setup is complete, every push to `main` deploys automatically.
+Follow the steps below **in order** the first time you deploy. After the one-time cloud setup is complete, every push to `master` deploys automatically.
 
 ```
 Recommended order:
@@ -266,7 +266,7 @@ export const environment = {
 };
 ```
 
-Commit and push this change to `main`.
+Commit and push this change to `master`.
 
 #### 3b. Create the Cloudflare Pages project
 
@@ -277,13 +277,13 @@ Commit and push this change to `main`.
 
    | Setting | Value |
    |---|---|
-   | **Production branch** | `main` |
+   | **Production branch** | `master` |
    | **Root directory** | `frontend` |
    | **Build command** | `ng build --configuration production` |
    | **Build output directory** | `dist/treasure-amu/browser` |
 
 5. Click **Save and Deploy**. Cloudflare builds and hosts the Angular app. No environment variables are required for the frontend build.
-6. Once the first deploy succeeds, Cloudflare assigns a `*.pages.dev` URL. Every subsequent push to `main` triggers a new build automatically.
+6. Once the first deploy succeeds, Cloudflare assigns a `*.pages.dev` URL. Every subsequent push to `master` triggers a new build automatically.
 
 #### 3c. (Optional) Map a custom domain
 
