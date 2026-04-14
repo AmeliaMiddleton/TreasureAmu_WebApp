@@ -1,0 +1,53 @@
+# Deploys the .NET 8 API to Azure App Service.
+# Triggers only when backend code or this workflow file changes on main.
+#
+# Required GitHub Secrets (Settings → Secrets and variables → Actions):
+#   AZURE_WEBAPP_NAME          — the App Service name you create in Azure (e.g. "treasureamu-api")
+#   AZURE_WEBAPP_PUBLISH_PROFILE — paste the full XML from Azure Portal:
+#                                  App Service → Overview → Get publish profile → copy file contents
+
+name: Deploy Backend to Azure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: 'backend/TreasureAmu.API/TreasureAmu.API.csproj'
+  PUBLISH_DIR: './publish'
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Build and publish
+        run: >
+          dotnet publish ${{ env.PROJECT_PATH }}
+          --configuration Release
+          --output ${{ env.PUBLISH_DIR }}
+          --no-restore
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.PUBLISH_DIR }}

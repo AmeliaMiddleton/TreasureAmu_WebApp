@@ -1,0 +1,5 @@
+# Cloudflare Pages — Angular client-side routing fix.
+# Without this, refreshing any route (e.g. /members) returns a 404
+# because Cloudflare looks for a real file that doesn't exist.
+# This rule sends all requests to index.html and lets Angular's router take over.
+/* /index.html 200
