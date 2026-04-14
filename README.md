@@ -245,11 +245,6 @@ Recommended order:
 4. Push any change to `backend/` on the `master` branch. The workflow at `.github/workflows/deploy-backend.yml` runs automatically: it restores packages, runs tests, and deploys if tests pass.
 5. Confirm the deploy succeeded: visit `https://<your-app-name>.azurewebsites.net/api/members/health` — it should return `{ "status": "ok" }`.
 
-#### 2d. (Optional) Map a custom domain
-
-1. In the Azure Portal → App Service → **Custom domains → Add custom domain**.
-2. Follow the wizard to add a CNAME or A record in your DNS provider pointing to the App Service.
-3. After the domain is verified, update `AllowedHosts` and `AllowedOrigins` in `appsettings.json` to include the new domain, then push to trigger a redeploy.
 
 ---
 
@@ -290,8 +285,13 @@ Commit and push this change to `master`.
 
 #### 3c. (Optional) Map a custom domain
 
+DNS for this project is managed at [Spaceship](https://www.spaceship.com).
+
 1. In the Cloudflare Pages project → **Custom domains → Set up a custom domain**.
-2. Enter your domain (e.g. `treasureamu.com`). If your domain's DNS is already managed by Cloudflare, the record is created automatically. Otherwise, add the provided CNAME to your external DNS provider.
+2. Enter your domain (e.g. `treasureamu.com`). Cloudflare will show you a CNAME record to add.
+3. Log in to Spaceship → your domain → **DNS** → add the CNAME record provided by Cloudflare.
+4. Once Cloudflare verifies the record (can take a few minutes), the custom domain goes live.
+5. After adding the domain, update `AllowedOrigins` in `appsettings.Production.json` to include it, then push to redeploy the backend.
 
 ---
 
