@@ -230,16 +230,20 @@ Recommended order:
 
 #### 2c. Wire up GitHub Actions for continuous deployment
 
-1. In the Azure Portal → App Service → **Overview → Get publish profile** → download the XML file and open it in a text editor.
-2. In your GitHub repository → **Settings → Secrets and variables → Actions → New repository secret**, create two secrets:
+1. Before downloading the publish profile, enable basic authentication:
+   - App Service → **Settings → Configuration → General settings** tab
+   - Scroll down to **SCM Basic Auth Publishing Credentials** and switch it **On**
+   - Click **Save** and wait for it to apply
+2. In the Azure Portal → App Service → **Overview → Download publish profile** → open the downloaded XML file in a text editor.
+3. In your GitHub repository → **Settings → Secrets and variables → Actions → New repository secret**, create two secrets:
 
    | Secret name | Value |
    |---|---|
    | `AZURE_WEBAPP_NAME` | The App Service name you chose (e.g. `treasureamu-api`) |
    | `AZURE_WEBAPP_PUBLISH_PROFILE` | Paste the full XML contents of the publish profile file |
 
-3. Push any change to `backend/` on the `main` branch. The workflow at `.github/workflows/deploy-backend.yml` runs automatically: it restores packages, runs tests, and deploys if tests pass.
-4. Confirm the deploy succeeded: visit `https://<your-app-name>.azurewebsites.net/api/members/health` — it should return `{ "status": "ok" }`.
+4. Push any change to `backend/` on the `master` branch. The workflow at `.github/workflows/deploy-backend.yml` runs automatically: it restores packages, runs tests, and deploys if tests pass.
+5. Confirm the deploy succeeded: visit `https://<your-app-name>.azurewebsites.net/api/members/health` — it should return `{ "status": "ok" }`.
 
 #### 2d. (Optional) Map a custom domain
 
