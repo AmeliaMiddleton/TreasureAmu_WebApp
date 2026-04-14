@@ -84,7 +84,7 @@ public class MembersController : ControllerBase
 
     /// <summary>
     /// GET /api/members/health
-    /// Simple health check endpoint.
+    /// Simple health check endpoint. Returns ok when the API is running.
     /// </summary>
     [HttpGet("health")]
     [ProducesResponseType(StatusCodes.Status200OK)]
