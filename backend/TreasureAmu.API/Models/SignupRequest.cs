@@ -9,10 +9,14 @@ namespace TreasureAmu.API.Models;
 public class SignupRequest : IValidatableObject
 {
     [Required]
+    // MaxLength mirrors the DB CHECK constraint (char_length BETWEEN 1 AND 50),
+    // rejecting oversized payloads at the API boundary before a DB round-trip.
+    [MaxLength(50)]
     [JsonPropertyName("firstName")]
     public string FirstName { get; set; } = string.Empty;
 
     [Required]
+    [MaxLength(50)]
     [JsonPropertyName("lastName")]
     public string LastName { get; set; } = string.Empty;
 

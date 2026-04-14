@@ -91,12 +91,28 @@ public class MemberService : IMemberService
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
+
+            // Detect a duplicate-key violation (PostgreSQL error 23505). This can
+            // occur in a race between two concurrent requests that both pass
+            // EmailExistsAsync before either insert completes. PostgREST returns
+            // HTTP 409 and a body containing the PG error code. Throw the same
+            // exception as the pre-check so the controller returns 409 Conflict
+            // instead of 500 Internal Server Error.
+            if (response.StatusCode == System.Net.HttpStatusCode.Conflict ||
+                body.Contains("\"23505\""))
+            {
+                throw new InvalidOperationException("An account with this email already exists.");
+            }
+
             var safeBody = body.Length > 200 ? body[..200] : body;
             _logger.LogError("Supabase insert failed [{Status}]: {Body}", response.StatusCode, safeBody);
             throw new HttpRequestException($"Database insert failed: {response.StatusCode}");
         }
 
-        _logger.LogInformation("New member created: {Email} ({SignupType})", member.Email, member.SignupType);
+        // Email is masked before logging to avoid storing PII in application
+        // logs, which may be shipped to Azure Monitor or other aggregators that
+        // have different retention and access controls than the database.
+        _logger.LogInformation("New member created: {Email} ({SignupType})", MaskEmail(member.Email), member.SignupType);
         return member;
     }
 
@@ -108,5 +124,18 @@ public class MemberService : IMemberService
         req.Headers.Add("apikey", _config.ServiceRoleKey);
         req.Headers.Add("Authorization", $"Bearer {_config.ServiceRoleKey}");
         return req;
+    }
+
+    /// <summary>
+    /// Returns a masked form of an email address safe to write to logs.
+    /// e.g. "amy@geekamu.com" → "a**@geekamu.com"
+    /// </summary>
+    private static string MaskEmail(string email)
+    {
+        var at = email.IndexOf('@');
+        if (at < 0) return "***";
+        var local = email[..at];
+        var visible = local.Length > 0 ? local[0].ToString() : string.Empty;
+        return visible + new string('*', Math.Min(local.Length - 1, 3)) + email[at..];
     }
 }

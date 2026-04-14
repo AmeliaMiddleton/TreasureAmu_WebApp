@@ -69,20 +69,36 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
 
-app.UseHttpsRedirection();
-
 // ── Security Headers ──────────────────────────────────────────────────────────
+// Applied first so every response — including CORS preflights, rate-limit
+// rejections, and redirects — carries these headers.
 app.Use(async (context, next) =>
 {
     var headers = context.Response.Headers;
     headers.Append("X-Content-Type-Options", "nosniff");
+    // X-Frame-Options is kept for older browsers; CSP frame-ancestors is the modern equivalent.
     headers.Append("X-Frame-Options", "DENY");
     headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
     headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    // Disable legacy XSS filter — modern browsers ignore it; enabling it can introduce XSS vectors.
+    // Disable legacy XSS auditor — it is removed in modern browsers and enabling
+    // it in older ones can introduce reflection-based XSS vectors.
     headers.Append("X-XSS-Protection", "0");
+    // CSP for a JSON-only API: deny rendering and framing by any browser that
+    // mistakenly tries to display the response as a page.
+    headers.Append("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
     await next();
 });
+
+// ── CORS must precede UseHttpsRedirection ─────────────────────────────────────
+// Browsers send CORS preflight OPTIONS requests over whatever scheme the
+// frontend used. If UseHttpsRedirection runs first it returns a 307 before
+// CORS headers are added; browsers do not follow redirects for preflights and
+// report a CORS failure instead of a redirect. By placing UseCors here,
+// preflights are handled and responded to before any redirect logic runs.
+app.UseCors();
+app.UseRateLimiter();
+
+app.UseHttpsRedirection();
 
 if (app.Environment.IsDevelopment())
 {
@@ -94,8 +110,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors();
-app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 
