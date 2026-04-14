@@ -170,33 +170,53 @@ export const environment = {
 
 ## Deployment
 
-### Frontend — Cloudflare Pages
+Follow the steps below **in order** the first time you deploy. After the one-time cloud setup is complete, every push to `main` deploys automatically.
 
-1. Push the repo to GitHub (Cloudflare watches the `main` branch).
-2. In the Cloudflare Dashboard → **Pages → Create application → Connect to Git**:
-   - **Build command:** `ng build --configuration production`
-   - **Build output directory:** `frontend/dist/treasure-amu/browser`
-   - **Root directory:** `frontend`
-3. The `frontend/public/_redirects` file is already in the repo and handles Angular client-side routing (`/* /index.html 200`).
+```
+Recommended order:
+  1. Supabase (database must exist before the API can connect)
+  2. Azure App Service (backend API)
+  3. Cloudflare Pages (frontend)
+```
 
-No secrets or environment variables are needed for the frontend build.
+---
 
-### Backend — Azure App Service (automated via GitHub Actions)
+### 1. Supabase — provision the database
 
-The CI/CD pipeline in `.github/workflows/deploy-backend.yml` triggers automatically on every push to `main` that changes files under `backend/`.
+1. Sign up or log in at [supabase.com](https://supabase.com).
+2. Click **New project**. Choose an organization, give the project a name (e.g. `treasureamu`), set a strong database password, and select the region closest to your users.
+3. Wait for the project to finish provisioning (usually 1–2 minutes).
+4. Go to **SQL Editor** and run each migration file in order:
+   - `database/migrations/001_create_members_table.sql`
+   - `database/migrations/002_remove_anon_insert_policy.sql`
+5. Go to **Project Settings → API** and copy these three values — you will need them in the next step:
+   - **Project URL** (e.g. `https://abcxyz.supabase.co`)
+   - **anon key** (`public` section)
+   - **service role key** (`secret` section — treat this like a password)
 
-**One-time setup:**
+---
 
-1. Create an Azure App Service (Linux, .NET 8).
-2. In the Azure Portal → App Service → **Overview → Get publish profile** → download the XML file.
-3. In GitHub → **Settings → Secrets and variables → Actions**, create two secrets:
+### 2. Azure App Service — provision the backend
 
-   | Secret name | Value |
-   |---|---|
-   | `AZURE_WEBAPP_NAME` | Your App Service name (e.g. `treasureamu-api`) |
-   | `AZURE_WEBAPP_PUBLISH_PROFILE` | Paste the full XML contents of the publish profile |
+#### 2a. Create the App Service
 
-4. In Azure App Service → **Configuration → Application Settings**, add:
+1. Sign in to the [Azure Portal](https://portal.azure.com).
+2. Click **Create a resource → Web → Web App**.
+3. Fill in the basics:
+   - **Subscription** — select your subscription.
+   - **Resource Group** — create new (e.g. `treasureamu-rg`).
+   - **Name** — this becomes the subdomain, e.g. `treasureamu-api` → `treasureamu-api.azurewebsites.net`. Pick something unique.
+   - **Publish** — Code.
+   - **Runtime stack** — `.NET 8 (LTS)`.
+   - **Operating System** — Linux.
+   - **Region** — same region as your Supabase project.
+4. Under **App Service Plan**, click **Create new**. The free **F1** tier is enough to start; upgrade to **B1** or higher for production traffic.
+5. Click **Review + create → Create** and wait for the deployment to finish.
+
+#### 2b. Add application settings (environment variables)
+
+1. In the Azure Portal → your new App Service → **Configuration → Application settings**.
+2. Click **New application setting** for each row below:
 
    | Name | Value |
    |---|---|
@@ -205,18 +225,109 @@ The CI/CD pipeline in `.github/workflows/deploy-backend.yml` triggers automatica
    | `Supabase__ServiceRoleKey` | Your Supabase service role key |
    | `ASPNETCORE_ENVIRONMENT` | `Production` |
 
-After these are configured, every push to `main` runs the test suite and then deploys if tests pass.
+3. Click **Save** at the top of the page. The App Service restarts automatically.
 
-### Database — Supabase migrations
+#### 2c. Wire up GitHub Actions for continuous deployment
 
-Migrations are plain SQL files run manually in the Supabase SQL Editor (or via the Supabase CLI). They are not automatically applied by the CI/CD pipeline.
+1. In the Azure Portal → App Service → **Overview → Get publish profile** → download the XML file and open it in a text editor.
+2. In your GitHub repository → **Settings → Secrets and variables → Actions → New repository secret**, create two secrets:
+
+   | Secret name | Value |
+   |---|---|
+   | `AZURE_WEBAPP_NAME` | The App Service name you chose (e.g. `treasureamu-api`) |
+   | `AZURE_WEBAPP_PUBLISH_PROFILE` | Paste the full XML contents of the publish profile file |
+
+3. Push any change to `backend/` on the `main` branch. The workflow at `.github/workflows/deploy-backend.yml` runs automatically: it restores packages, runs tests, and deploys if tests pass.
+4. Confirm the deploy succeeded: visit `https://<your-app-name>.azurewebsites.net/api/members/health` — it should return `{ "status": "ok" }`.
+
+#### 2d. (Optional) Map a custom domain
+
+1. In the Azure Portal → App Service → **Custom domains → Add custom domain**.
+2. Follow the wizard to add a CNAME or A record in your DNS provider pointing to the App Service.
+3. After the domain is verified, update `AllowedHosts` and `AllowedOrigins` in `appsettings.json` to include the new domain, then push to trigger a redeploy.
+
+---
+
+### 3. Cloudflare Pages — provision the frontend
+
+#### 3a. Set the production API URL
+
+Before pushing, make sure `frontend/src/environments/environment.prod.ts` points to your Azure App Service URL:
+
+```typescript
+export const environment = {
+  production: true,
+  apiUrl: 'https://treasureamu-api.azurewebsites.net'  // ← your App Service URL
+};
+```
+
+Commit and push this change to `main`.
+
+#### 3b. Create the Cloudflare Pages project
+
+1. Sign up or log in at [dash.cloudflare.com](https://dash.cloudflare.com).
+2. In the sidebar go to **Workers & Pages → Create → Pages → Connect to Git**.
+3. Authorize Cloudflare to access GitHub, then select the `TreasureAmu_WebApp` repository.
+4. Configure the build settings:
+
+   | Setting | Value |
+   |---|---|
+   | **Production branch** | `main` |
+   | **Root directory** | `frontend` |
+   | **Build command** | `ng build --configuration production` |
+   | **Build output directory** | `dist/treasure-amu/browser` |
+
+5. Click **Save and Deploy**. Cloudflare builds and hosts the Angular app. No environment variables are required for the frontend build.
+6. Once the first deploy succeeds, Cloudflare assigns a `*.pages.dev` URL. Every subsequent push to `main` triggers a new build automatically.
+
+#### 3c. (Optional) Map a custom domain
+
+1. In the Cloudflare Pages project → **Custom domains → Set up a custom domain**.
+2. Enter your domain (e.g. `treasureamu.com`). If your domain's DNS is already managed by Cloudflare, the record is created automatically. Otherwise, add the provided CNAME to your external DNS provider.
+
+---
+
+### 4. Database — apply migrations
+
+Migrations are plain SQL files. Run them manually whenever the schema changes.
+
+**Option A — Supabase Dashboard (no extra tools)**
+
+Paste each file into **Supabase Dashboard → SQL Editor → Run** in order:
+1. `database/migrations/001_create_members_table.sql`
+2. `database/migrations/002_remove_anon_insert_policy.sql`
+
+**Option B — Supabase CLI**
 
 ```bash
-# With Supabase CLI (optional)
+# Install the CLI (one-time)
+npm install -g supabase
+
+# Log in and link to your project
+supabase login
+supabase link --project-ref YOUR_PROJECT_ID
+
+# Push all pending migrations
 supabase db push
 ```
 
-Or paste each file in **Supabase Dashboard → SQL Editor → Run**.
+Migrations are **not** applied automatically by the CI/CD pipeline.
+
+---
+
+### Deployment checklist
+
+Use this list when setting up a new instance from scratch:
+
+- [ ] Supabase project created and both migration files applied
+- [ ] Supabase URL, anon key, and service role key copied
+- [ ] Azure App Service created (Linux, .NET 8)
+- [ ] Four Azure Application Settings added (`Supabase__Url`, `Supabase__AnonKey`, `Supabase__ServiceRoleKey`, `ASPNETCORE_ENVIRONMENT`)
+- [ ] `AZURE_WEBAPP_NAME` and `AZURE_WEBAPP_PUBLISH_PROFILE` GitHub secrets added
+- [ ] Health endpoint responds: `GET /api/members/health → { "status": "ok" }`
+- [ ] `environment.prod.ts` updated with the correct Azure API URL and committed
+- [ ] Cloudflare Pages project created with correct root directory and build command
+- [ ] Frontend loads and can submit the signup form successfully
 
 ---
 
