@@ -142,7 +142,7 @@ All values in this file are safe defaults or placeholders. **Never put real cred
 
 **In development** use `dotnet user-secrets` (see above) — secrets are stored outside the repo in `%APPDATA%\Microsoft\UserSecrets\`.
 
-**In production** on Azure App Service, set these as **Application Settings** (environment variables). Azure maps `__` to `:` in config section names:
+**In production** on Azure App Service, set these under **Settings → Environment variables** (or **Configuration → Application settings** in older portal versions). Azure maps `__` to `:` in config section names:
 
 | Azure App Setting name | Maps to config key |
 |---|---|
@@ -215,8 +215,9 @@ Recommended order:
 
 #### 2b. Add application settings (environment variables)
 
-1. In the Azure Portal → your new App Service → **Configuration → Application settings**.
-2. Click **New application setting** for each row below:
+1. In the Azure Portal → your new App Service → **Settings → Environment variables**.
+   > If you don't see "Environment variables", try **Configuration → Application settings** — both paths exist depending on your portal version.
+2. Click **Add** for each row below:
 
    | Name | Value |
    |---|---|
