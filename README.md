@@ -331,7 +331,7 @@ Use this list when setting up a new instance from scratch:
 - [ ] Supabase URL, anon key, and service role key copied
 - [ ] Azure App Service created (Linux, .NET 8)
 - [ ] Four Azure Application Settings added (`Supabase__Url`, `Supabase__AnonKey`, `Supabase__ServiceRoleKey`, `ASPNETCORE_ENVIRONMENT`)
-- [ ] SCM Basic Auth Publishing Credentials enabled (Settings → Configuration → General settings)
+- [ ] SCM Basic Auth Publishing Credentials enabled — Azure Portal → App Service → **Settings → Configuration → General settings** tab → scroll down to **SCM Basic Auth Publishing Credentials** → switch **On** → Save
 - [ ] `AZURE_WEBAPP_NAME` and `AZURE_WEBAPP_PUBLISH_PROFILE` GitHub secrets added
 - [ ] Azure App Service hostname added to `AllowedHosts` in `appsettings.Production.json`
 - [ ] Health endpoint responds: `GET https://<app-name>.azurewebsites.net/api/members/health → { "status": "ok" }`
@@ -342,21 +342,21 @@ Use this list when setting up a new instance from scratch:
 
 ---
 
-## Production vs Development instances
+## Production vs Staging vs Development
 
-| | Development | Production |
-|---|---|---|
-| **Frontend** | `http://localhost:4200` (Angular dev server) | `https://treasureamu-webapp.pages.dev` (Cloudflare Pages) |
-| **Backend** | `http://localhost:5000` (dotnet run) | `https://treasureamu.azurewebsites.net` (Azure App Service) |
-| **Database** | Supabase cloud (same project is fine for solo dev) | Supabase cloud |
-| **API URL config** | `frontend/src/environments/environment.ts` | `frontend/src/environments/environment.prod.ts` |
-| **Backend secrets** | `dotnet user-secrets` (stored outside repo) | Azure Application Settings |
-| **Deploy trigger** | Manual (`ng serve` / `dotnet run`) | Push to `master` branch |
-| **CORS origins** | `http://localhost:4200` | `https://treasureamu-webapp.pages.dev` + custom domains |
+| | Development (local) | Staging | Production |
+|---|---|---|---|
+| **Frontend** | `http://localhost:4200` | `https://treasureamu-staging.pages.dev` | `https://treasureamu-webapp.pages.dev` |
+| **Backend** | `http://localhost:5000` | `https://treasureamu-staging.azurewebsites.net` | `https://treasureamu.azurewebsites.net` |
+| **Database** | Supabase (own project) | Supabase (separate staging project) | Supabase (production project) |
+| **Angular env file** | `environment.ts` | `environment.staging.ts` | `environment.prod.ts` |
+| **Backend config** | `appsettings.Development.json` | `appsettings.Staging.json` | `appsettings.Production.json` |
+| **Backend secrets** | `dotnet user-secrets` | Azure App Settings (staging) | Azure App Settings (production) |
+| **Deploy trigger** | Manual | Push to `staging` branch | Push to `master` branch |
+| **GitHub Actions workflow** | — | `deploy-backend-staging.yml` | `deploy-backend.yml` |
 
-### Switching between instances
+### Run locally (development)
 
-**Run locally (development):**
 ```bash
 # Terminal 1 — backend
 cd backend/TreasureAmu.API
@@ -366,11 +366,52 @@ dotnet run
 cd frontend
 ng serve
 ```
+
 Open `http://localhost:4200`. The Angular dev proxy forwards `/api/*` to `http://localhost:5000` automatically.
 
-**Deploy to production:**
+### Deploy to staging
 
-Push to `master`. GitHub Actions deploys the backend to Azure; Cloudflare Pages rebuilds and deploys the frontend. No manual steps needed after the one-time setup.
+1. Create a staging Azure App Service following the same steps as production.
+2. Add these GitHub secrets:
+
+   | Secret name | Value |
+   |---|---|
+   | `AZURE_STAGING_WEBAPP_NAME` | Staging App Service name (e.g. `treasureamu-staging`) |
+   | `AZURE_STAGING_WEBAPP_PUBLISH_PROFILE` | Publish profile XML from the staging App Service |
+
+3. In the staging Azure App Service → **Settings → Environment variables**, add:
+
+   | Name | Value |
+   |---|---|
+   | `Supabase__Url` | Your **staging** Supabase project URL |
+   | `Supabase__AnonKey` | Your **staging** Supabase anon key |
+   | `Supabase__ServiceRoleKey` | Your **staging** Supabase service role key |
+   | `ASPNETCORE_ENVIRONMENT` | `Staging` |
+
+4. Push to the `staging` branch — `deploy-backend-staging.yml` deploys the backend automatically.
+5. Cloudflare Pages automatically creates a preview deployment for the `staging` branch with its own URL.
+6. Update `environment.staging.ts` with the staging API URL and the staging Cloudflare preview URL in `appsettings.Staging.json`.
+
+### Deploy to production
+
+Push to `master`. GitHub Actions deploys the backend to Azure; Cloudflare Pages rebuilds and deploys the frontend automatically.
+
+---
+
+### Staging checklist
+
+Use this list when setting up the staging instance from scratch:
+
+- [ ] Staging Supabase project created and both migration files applied
+- [ ] Staging Azure App Service created (Linux, .NET 8)
+- [ ] SCM Basic Auth Publishing Credentials enabled — Azure Portal → staging App Service → **Settings → Configuration → General settings** tab → scroll down to **SCM Basic Auth Publishing Credentials** → switch **On** → Save
+- [ ] Four Azure Application Settings added to staging App Service (`Supabase__Url`, `Supabase__AnonKey`, `Supabase__ServiceRoleKey`, `ASPNETCORE_ENVIRONMENT=Staging`)
+- [ ] `AZURE_STAGING_WEBAPP_NAME` and `AZURE_STAGING_WEBAPP_PUBLISH_PROFILE` GitHub secrets added
+- [ ] Staging App Service hostname added to `AllowedHosts` in `appsettings.Staging.json`
+- [ ] Staging health endpoint responds: `GET https://treasureamu-staging.azurewebsites.net/api/members/health → { "status": "ok" }`
+- [ ] `environment.staging.ts` updated with the correct staging API URL
+- [ ] Staging Cloudflare Pages preview URL added to `AllowedOrigins` in `appsettings.Staging.json`
+- [ ] Staging frontend loads and signup form submits successfully
 
 ---
 

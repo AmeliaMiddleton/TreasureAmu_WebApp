@@ -1,0 +1,55 @@
+# Deploys the .NET 8 API to the staging Azure App Service.
+# Triggers on every push to the 'staging' branch that changes backend code.
+#
+# Required GitHub Secrets (Settings → Secrets and variables → Actions):
+#   AZURE_STAGING_WEBAPP_NAME          — the staging App Service name (e.g. "treasureamu-staging")
+#   AZURE_STAGING_WEBAPP_PUBLISH_PROFILE — publish profile XML from the staging App Service
+
+name: Deploy Backend to Azure (Staging)
+
+on:
+  push:
+    branches:
+      - staging
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend-staging.yml'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: 'backend/TreasureAmu.API/TreasureAmu.API.csproj'
+  PUBLISH_DIR: './publish'
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy API (Staging)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Build
+        run: dotnet build ${{ env.PROJECT_PATH }} --no-restore --configuration Release
+
+      - name: Publish
+        run: >
+          dotnet publish ${{ env.PROJECT_PATH }}
+          --configuration Release
+          --output ${{ env.PUBLISH_DIR }}
+          --no-restore
+
+      - name: Deploy to Azure App Service (Staging)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_STAGING_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_STAGING_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.PUBLISH_DIR }}
