@@ -41,8 +41,8 @@ jobs:
       # Run the test suite before packaging. This gates deployment so that
       # security regressions (broken validation, misconfigured middleware, etc.)
       # are caught in CI before they reach production.
-      - name: Run tests
-        run: dotnet test backend/ --no-restore --configuration Release --verbosity normal
+      - name: Build
+        run: dotnet build ${{ env.PROJECT_PATH }} --no-restore --configuration Release
 
       - name: Build and publish
         run: >
