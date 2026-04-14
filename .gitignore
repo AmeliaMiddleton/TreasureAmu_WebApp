@@ -12,10 +12,12 @@ backend/**/obj/
 backend/**/*.user
 backend/**/*.suo
 backend/.vs/
-backend/**/appsettings.Production.json
-
 # IMPORTANT: Never commit secrets. Use dotnet user-secrets or environment vars.
-# backend/**/appsettings.json is committed with placeholder values only.
+# appsettings.json        — committed with placeholder values only (safe to track).
+# appsettings.Production.json — committed; contains NO secrets. All Supabase
+#                               credentials are set as Azure App Service environment
+#                               variables (Supabase__Url, Supabase__ServiceRoleKey, etc.).
+# appsettings.Development.json — committed; contains only log-level overrides.
 
 # ── Supabase CLI ──────────────────────────────────────────────────────────────
 .supabase/
