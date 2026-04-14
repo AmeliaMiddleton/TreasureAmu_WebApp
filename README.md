@@ -285,13 +285,37 @@ Commit and push this change to `master`.
 
 #### 3c. (Optional) Map a custom domain
 
-DNS for this project is managed at [Spaceship](https://www.spaceship.com).
+> ⚠️ **DOCUMENTATION INCOMPLETE** — SSL activation after the nameserver switch is still being resolved. The steps below cover the nameserver changeover but the SSL troubleshooting section is not yet written.
 
-1. In the Cloudflare Pages project → **Custom domains → Set up a custom domain**.
-2. Enter your domain (e.g. `treasureamu.com`). Cloudflare will show you a CNAME record to add.
-3. Log in to Spaceship → your domain → **DNS** → add the CNAME record provided by Cloudflare.
-4. Once Cloudflare verifies the record (can take a few minutes), the custom domain goes live.
-5. After adding the domain, update `AllowedOrigins` in `appsettings.Production.json` to include it, then push to redeploy the backend.
+DNS for this project is managed at [Spaceship](https://www.spaceship.com). Cloudflare Pages requires the domain to use Cloudflare's nameservers — a simple CNAME is not enough.
+
+**Step 1 — Add the domain to Cloudflare**
+
+1. Log in to [dash.cloudflare.com](https://dash.cloudflare.com)
+2. Click your account name → **+ Add button (top right) → Connect a domain**
+3. Enter your domain (e.g. `treasureamu.com`) and click **Continue**
+4. Select **Import DNS records automatically** and click **Continue**
+5. Select the **Free plan**
+6. Cloudflare will display your DNS records and give you two nameserver addresses (e.g. `bayan.ns.cloudflare.com` and `rosa.ns.cloudflare.com`)
+
+**Step 2 — Update nameservers at Spaceship**
+
+1. Log in to [Spaceship](https://www.spaceship.com) → your domain → **Nameservers**
+2. Replace the existing nameservers with the two Cloudflare nameservers shown in step 1
+3. Save the changes
+4. Propagation is automatic — it typically completes within 1 hour but can take up to 48 hours
+
+**Step 3 — Configure SSL in Cloudflare**
+
+1. In Cloudflare → **treasureamu.com** → **SSL/TLS → Overview**
+2. Set the encryption mode to **Full (Strict)**
+3. Go to **SSL/TLS → Edge Certificates** and confirm the certificate status is **Active**
+
+**Step 4 — Add the custom domain to Cloudflare Pages**
+
+1. Go to **Workers & Pages → treasureamu-webapp → Custom domains → Set up a custom domain**
+2. Enter your domain — Cloudflare will verify it automatically since it now controls the DNS
+3. After the domain is active, update `AllowedOrigins` in `appsettings.Production.json` to include it, then push to redeploy the backend
 
 ---
 
