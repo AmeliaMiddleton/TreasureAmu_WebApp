@@ -257,12 +257,12 @@ Recommended order:
 
 #### 3a. Set the production API URL
 
-Before pushing, make sure `frontend/src/environments/environment.prod.ts` points to your Azure App Service URL:
+Make sure `frontend/src/environments/environment.prod.ts` points to your Azure App Service URL:
 
 ```typescript
 export const environment = {
   production: true,
-  apiUrl: 'https://treasureamu-api.azurewebsites.net'  // ← your App Service URL
+  apiBaseUrl: 'https://treasureamu.azurewebsites.net'  // ← your App Service URL
 };
 ```
 
@@ -272,6 +272,7 @@ Commit and push this change to `master`.
 
 1. Sign up or log in at [dash.cloudflare.com](https://dash.cloudflare.com).
 2. In the sidebar go to **Workers & Pages → Create → Pages → Connect to Git**.
+   > Make sure to select **Pages**, not Workers — they are two different products shown as tabs.
 3. Authorize Cloudflare to access GitHub, then select the `TreasureAmu_WebApp` repository.
 4. Configure the build settings:
 
@@ -279,11 +280,13 @@ Commit and push this change to `master`.
    |---|---|
    | **Production branch** | `master` |
    | **Root directory** | `frontend` |
-   | **Build command** | `ng build --configuration production` |
+   | **Build command** | `npx ng build --configuration production` |
    | **Build output directory** | `dist/frontend/browser` |
 
+   > Use `npx ng` not `ng` — the Angular CLI is not installed globally in Cloudflare's build environment.
+
 5. Click **Save and Deploy**. Cloudflare builds and hosts the Angular app. No environment variables are required for the frontend build.
-6. Once the first deploy succeeds, Cloudflare assigns a `*.pages.dev` URL. Every subsequent push to `master` triggers a new build automatically.
+6. Once the first deploy succeeds, Cloudflare assigns a `*.pages.dev` URL. Every subsequent push to `master` that changes files under `frontend/` triggers a new build automatically.
 
 #### 3c. (Optional) Map a custom domain
 
@@ -328,11 +331,46 @@ Use this list when setting up a new instance from scratch:
 - [ ] Supabase URL, anon key, and service role key copied
 - [ ] Azure App Service created (Linux, .NET 8)
 - [ ] Four Azure Application Settings added (`Supabase__Url`, `Supabase__AnonKey`, `Supabase__ServiceRoleKey`, `ASPNETCORE_ENVIRONMENT`)
+- [ ] SCM Basic Auth Publishing Credentials enabled (Settings → Configuration → General settings)
 - [ ] `AZURE_WEBAPP_NAME` and `AZURE_WEBAPP_PUBLISH_PROFILE` GitHub secrets added
-- [ ] Health endpoint responds: `GET /api/members/health → { "status": "ok" }`
-- [ ] `environment.prod.ts` updated with the correct Azure API URL and committed
-- [ ] Cloudflare Pages project created with correct root directory and build command
-- [ ] Frontend loads and can submit the signup form successfully
+- [ ] Azure App Service hostname added to `AllowedHosts` in `appsettings.Production.json`
+- [ ] Health endpoint responds: `GET https://<app-name>.azurewebsites.net/api/members/health → { "status": "ok" }`
+- [ ] `environment.prod.ts` updated with the correct Azure API URL (`apiBaseUrl`)
+- [ ] Cloudflare Pages project created — Pages (not Workers), build command `npx ng build --configuration production`, output `dist/frontend/browser`
+- [ ] Cloudflare Pages domain added to `AllowedOrigins` in `appsettings.Production.json`
+- [ ] Frontend loads and signup form submits successfully
+
+---
+
+## Production vs Development instances
+
+| | Development | Production |
+|---|---|---|
+| **Frontend** | `http://localhost:4200` (Angular dev server) | `https://treasureamu-webapp.pages.dev` (Cloudflare Pages) |
+| **Backend** | `http://localhost:5000` (dotnet run) | `https://treasureamu.azurewebsites.net` (Azure App Service) |
+| **Database** | Supabase cloud (same project is fine for solo dev) | Supabase cloud |
+| **API URL config** | `frontend/src/environments/environment.ts` | `frontend/src/environments/environment.prod.ts` |
+| **Backend secrets** | `dotnet user-secrets` (stored outside repo) | Azure Application Settings |
+| **Deploy trigger** | Manual (`ng serve` / `dotnet run`) | Push to `master` branch |
+| **CORS origins** | `http://localhost:4200` | `https://treasureamu-webapp.pages.dev` + custom domains |
+
+### Switching between instances
+
+**Run locally (development):**
+```bash
+# Terminal 1 — backend
+cd backend/TreasureAmu.API
+dotnet run
+
+# Terminal 2 — frontend
+cd frontend
+ng serve
+```
+Open `http://localhost:4200`. The Angular dev proxy forwards `/api/*` to `http://localhost:5000` automatically.
+
+**Deploy to production:**
+
+Push to `master`. GitHub Actions deploys the backend to Azure; Cloudflare Pages rebuilds and deploys the frontend. No manual steps needed after the one-time setup.
 
 ---
 
