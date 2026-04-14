@@ -280,7 +280,7 @@ Commit and push this change to `master`.
    | **Production branch** | `master` |
    | **Root directory** | `frontend` |
    | **Build command** | `ng build --configuration production` |
-   | **Build output directory** | `dist/treasure-amu/browser` |
+   | **Build output directory** | `dist/frontend` |
 
 5. Click **Save and Deploy**. Cloudflare builds and hosts the Angular app. No environment variables are required for the frontend build.
 6. Once the first deploy succeeds, Cloudflare assigns a `*.pages.dev` URL. Every subsequent push to `master` triggers a new build automatically.
