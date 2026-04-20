@@ -285,9 +285,7 @@ Commit and push this change to `master`.
 
 #### 3c. (Optional) Map a custom domain
 
-> ⚠️ **DOCUMENTATION INCOMPLETE** — SSL activation after the nameserver switch is still being resolved. The steps below cover the nameserver changeover but the SSL troubleshooting section is not yet written.
-
-DNS for this project is managed at [Spaceship](https://www.spaceship.com). Cloudflare Pages requires the domain to use Cloudflare's nameservers — a simple CNAME is not enough.
+DNS for this project is managed at [Spaceship](https://www.spaceship.com). Cloudflare Pages requires the domain to use Cloudflare's nameservers — a simple CNAME is not enough. Since Cloudflare controls all DNS after the nameserver switch, email MX records also live in Cloudflare but still point to Spaceship's mail servers, so email continues to work.
 
 **Step 1 — Add the domain to Cloudflare**
 
@@ -305,17 +303,50 @@ DNS for this project is managed at [Spaceship](https://www.spaceship.com). Cloud
 3. Save the changes
 4. Propagation is automatic — it typically completes within 1 hour but can take up to 48 hours
 
-**Step 3 — Configure SSL in Cloudflare**
+**Step 3 — Verify DNS records in Cloudflare**
+
+Go to **Cloudflare → treasureamu.com → DNS → Records** and confirm the following records exist:
+
+| Type | Name | Content | Proxy status |
+|---|---|---|---|
+| `CNAME` | `@` | `treasureamu-webapp.pages.dev` | Proxied (orange cloud) |
+| `CNAME` | `www` | `treasureamu-webapp.pages.dev` | Proxied (orange cloud) |
+| `MX` | `@` | Spaceship mail server (e.g. `mx1.spacemail.com`) | DNS only |
+| `MX` | `@` | Spaceship mail server (e.g. `mx2.spacemail.com`) | DNS only |
+| `TXT` | `@` | SPF record (starts with `v=spf1`) | DNS only |
+
+The CNAME records should have been auto-imported. If either CNAME is missing, add it manually. The MX and TXT records are for email and should also have been imported automatically — if missing, get the values from Spaceship's DNS settings before adding them.
+
+> **MX records must be DNS only (grey cloud)** — email cannot be proxied through Cloudflare.
+
+**Step 4 — Configure SSL in Cloudflare**
 
 1. In Cloudflare → **treasureamu.com** → **SSL/TLS → Overview**
 2. Set the encryption mode to **Full (Strict)**
-3. Go to **SSL/TLS → Edge Certificates** and confirm the certificate status is **Active**
+3. Go to **SSL/TLS → Edge Certificates** and confirm the Universal SSL certificate status is **Active**
+   - If it says **Pending Issuance** or **Authorizing**, wait up to 24 hours — the certificate is still being issued
 
-**Step 4 — Add the custom domain to Cloudflare Pages**
+**Step 5 — Add the custom domain to Cloudflare Pages**
 
 1. Go to **Workers & Pages → treasureamu-webapp → Custom domains → Set up a custom domain**
 2. Enter your domain — Cloudflare will verify it automatically since it now controls the DNS
-3. After the domain is active, update `AllowedOrigins` in `appsettings.Production.json` to include it, then push to redeploy the backend
+3. Wait for the status to show **Active** and **SSL enabled**
+4. After the domain is active, update `AllowedOrigins` in `appsettings.Production.json` to include it, then push to redeploy the backend
+
+**Step 6 — Verify the site loads**
+
+Visit `https://treasureamu.com` in your browser. If you see `DNS_PROBE_FINISHED_NXDOMAIN`:
+
+1. DNS propagation may not have reached your machine yet. First, flush your DNS cache:
+   - Open Command Prompt as Administrator and run: `ipconfig /flushdns`
+2. Clear Chrome's DNS cache — go to `chrome://net-internals/#dns` and click **Clear host cache**, then go to the **Sockets** tab and click **Flush socket pools**
+3. Test whether propagation has reached Google's DNS by running: `nslookup treasureamu.com 8.8.8.8`
+   - If this returns IP addresses, your ISP's DNS is just slow — continue to step 4
+   - If this also returns NXDOMAIN, propagation is not complete yet — wait a few hours and try again
+4. If your ISP is slow, temporarily switch your PC's DNS to Google's servers:
+   - **Settings → Network & Internet → Wi-Fi/Ethernet → Hardware properties → DNS server assignment → Edit → Manual → IPv4**
+   - Preferred DNS: `8.8.8.8` · Alternate DNS: `8.8.4.4`
+   - Once the site loads you can switch back to Automatic — your ISP's DNS will have caught up by then
 
 ---
 
